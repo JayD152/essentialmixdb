@@ -21,6 +21,7 @@ RUN npm run build
 FROM node:${NODE_VERSION}-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
+COPY --from=builder /app/node_modules ./node_modules
     PORT=3000 \
     NEXT_SHARP_PATH="/app/node_modules/sharp"
 

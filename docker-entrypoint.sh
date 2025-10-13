@@ -10,23 +10,38 @@ fi
 
 # Run migrations if using a migrate-capable provider (ignored for plain SQLite file if unchanged)
 if echo "$DATABASE_URL" | grep -qiE 'postgres|mysql|sqlserver'; then
-  echo "[entrypoint] Database is server-based; attempting prisma migrate deploy"
+  echo "[entrypoint] Database is server-based; running prisma migrate deploy with retries"
+
+  PRISMA_CLI=""
   if [ -x ./node_modules/.bin/prisma ]; then
-    ./node_modules/.bin/prisma migrate deploy || echo "[entrypoint] prisma migrate deploy failed (CLI present)"
-  else
-    # Try npx if available; do not fail container if not
-    if command -v npx >/dev/null 2>&1; then
-      npx prisma migrate deploy || echo "[entrypoint] prisma CLI not available via npx; skipping migrations"
-    else
-      echo "[entrypoint] npx not found; skipping migrations"
-    fi
+    PRISMA_CLI=./node_modules/.bin/prisma
+  elif command -v npx >/dev/null 2>&1; then
+    PRISMA_CLI="npx prisma"
   fi
+
+  if [ -z "$PRISMA_CLI" ]; then
+    echo "[entrypoint] ERROR: Prisma CLI not found. Cannot run migrations." >&2
+    exit 1
+  fi
+
+  ATTEMPTS=0
+  MAX_ATTEMPTS=10
+  until $PRISMA_CLI migrate deploy; do
+    ATTEMPTS=$((ATTEMPTS+1))
+    if [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; then
+      echo "[entrypoint] ERROR: prisma migrate deploy failed after $ATTEMPTS attempts. Exiting." >&2
+      exit 1
+    fi
+    echo "[entrypoint] Migrate failed (attempt $ATTEMPTS). Retrying in 5s..."
+    sleep 5
+  done
+  echo "[entrypoint] Migrations applied successfully."
 else
   # Ensure client is generated (needed if mounted volume overrides node_modules or prisma output)
   if [ -x ./node_modules/.bin/prisma ]; then
     ./node_modules/.bin/prisma generate >/dev/null 2>&1 || true
-  else
-    command -v npx >/dev/null 2>&1 && npx prisma generate >/dev/null 2>&1 || true
+  elif command -v npx >/dev/null 2>&1; then
+    npx prisma generate >/dev/null 2>&1 || true
   fi
 fi
 
