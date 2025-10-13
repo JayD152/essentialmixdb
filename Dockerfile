@@ -6,7 +6,7 @@ ARG NODE_VERSION=20.11.1
 FROM node:${NODE_VERSION}-alpine AS deps
 WORKDIR /app
 ENV CI=true
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* .npmrc* ./ 2>/dev/null || true
+COPY package*.json ./
 RUN npm install --no-audit --no-fund
 
 FROM node:${NODE_VERSION}-alpine AS builder
