@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NEXTAUTH_URL: "http://localhost:3000" # set to your domain in prod
+      NEXTAUTH_SECRET: "changeme-dev-secret" # replace in prod
+      DATABASE_URL: "file:/data/dev.db" # persist DB under /data
+    volumes:
+      - sqlite_data:/data
+volumes:
+  sqlite_data: {}

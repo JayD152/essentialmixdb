@@ -27,7 +27,7 @@ ENV NODE_ENV=production \
 # Copy only the standalone production output and minimal assets
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-#COPY --from=builder /app/public ./public
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 # Include Prisma CLI from builder so migrations can run in runtime container

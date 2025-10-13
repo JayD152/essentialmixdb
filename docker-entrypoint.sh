@@ -4,8 +4,8 @@ set -e
 echo "[entrypoint] Starting Essential Mix DB"
 
 if [ -z "$DATABASE_URL" ]; then
-  echo "[entrypoint] WARNING: DATABASE_URL not set. Falling back to local SQLite file dev.db" >&2
-  export DATABASE_URL="file:./dev.db"
+  echo "[entrypoint] WARNING: DATABASE_URL not set. Falling back to local SQLite file prisma/dev.db" >&2
+  export DATABASE_URL="file:./prisma/dev.db"
 fi
 
 # Run migrations if using a migrate-capable provider (ignored for plain SQLite file if unchanged)
@@ -41,11 +41,13 @@ if echo "$DATABASE_URL" | grep -qiE 'postgres|mysql|sqlserver'; then
     run_prisma db push --accept-data-loss --schema "$SCHEMA_PATH" || echo "[entrypoint] prisma db push also failed"
   fi
 else
-  # Ensure client is generated (needed if mounted volume overrides node_modules or prisma output)
+  # SQLite: ensure client + schema exist (idempotent)
   if [ -x ./node_modules/.bin/prisma ]; then
     ./node_modules/.bin/prisma generate >/dev/null 2>&1 || true
+    ./node_modules/.bin/prisma db push --accept-data-loss --schema ./prisma/schema.prisma >/dev/null 2>&1 || true
   else
     command -v npx >/dev/null 2>&1 && npx prisma generate >/dev/null 2>&1 || true
+    command -v npx >/dev/null 2>&1 && npx prisma db push --accept-data-loss --schema ./prisma/schema.prisma >/dev/null 2>&1 || true
   fi
 fi
 

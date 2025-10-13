@@ -103,6 +103,18 @@ docker run --rm -p 3000:3000 `
 	-e NEXTAUTH_URL=http://localhost:3000 essential-mix-db
 ```
 
+Alternative (recommended) with a named volume and dedicated data dir:
+```powershell
+# Uses docker-compose.sqlite.yml (persists DB at /data/dev.db in a named volume)
+docker compose -f docker-compose.sqlite.yml up --build -d
+```
+In this setup, the app uses `DATABASE_URL=file:/data/dev.db` and mounts a durable named volume at `/data`.
+
+Portainer notes:
+- Create a new Stack and paste `docker-compose.sqlite.yml` contents.
+- Set `NEXTAUTH_SECRET` and `NEXTAUTH_URL` in the stack environment.
+- The `sqlite_data` named volume is created automatically and persists the DB between deploys.
+
 ### Docker + Postgres (Recommended)
 Use the included `docker-compose.yml`:
 ```powershell
