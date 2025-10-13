@@ -10,16 +10,35 @@ fi
 
 # Run migrations if using a migrate-capable provider (ignored for plain SQLite file if unchanged)
 if echo "$DATABASE_URL" | grep -qiE 'postgres|mysql|sqlserver'; then
-  echo "[entrypoint] Database is server-based; attempting prisma migrate deploy"
-  if [ -x ./node_modules/.bin/prisma ]; then
-    ./node_modules/.bin/prisma migrate deploy || echo "[entrypoint] prisma migrate deploy failed (CLI present)"
-  else
-    # Try npx if available; do not fail container if not
-    if command -v npx >/dev/null 2>&1; then
-      npx prisma migrate deploy || echo "[entrypoint] prisma CLI not available via npx; skipping migrations"
+  echo "[entrypoint] Server DB detected; running migrations"
+  SCHEMA_PATH="./prisma/schema.prisma"
+  # helper to run prisma command (local or npx)
+  run_prisma() {
+    if [ -x ./node_modules/.bin/prisma ]; then
+      ./node_modules/.bin/prisma "$@"
+    elif command -v npx >/dev/null 2>&1; then
+      npx prisma "$@"
     else
-      echo "[entrypoint] npx not found; skipping migrations"
+      return 127
     fi
+  }
+
+  # wait for DB to accept connections (retry up to ~60s)
+  tries=0
+  until run_prisma migrate status --schema "$SCHEMA_PATH" >/dev/null 2>&1; do
+    tries=$((tries+1))
+    if [ $tries -ge 30 ]; then
+      echo "[entrypoint] Database not ready after waiting; proceeding anyway"
+      break
+    fi
+    echo "[entrypoint] Waiting for database... ($tries)"
+    sleep 2
+  done
+
+  # attempt migrate deploy, fallback to db push for brand-new DBs
+  if ! run_prisma migrate deploy --schema "$SCHEMA_PATH"; then
+    echo "[entrypoint] migrate deploy failed; attempting prisma db push for fresh DB"
+    run_prisma db push --accept-data-loss --schema "$SCHEMA_PATH" || echo "[entrypoint] prisma db push also failed"
   fi
 else
   # Ensure client is generated (needed if mounted volume overrides node_modules or prisma output)
