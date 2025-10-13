@@ -5,6 +5,9 @@ export const metadata = {
 	title: 'About • Essential Mix DB'
 };
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function AboutPage() {
 	// Parallelize small aggregate lookups
 	const [mixCount, trackCount, reviewCount, userCount, libraryCount, recommendedCount, firstMix, latestMix] = await Promise.all([

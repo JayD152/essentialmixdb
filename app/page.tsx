@@ -2,6 +2,9 @@ import { LatestSection } from '../components/LatestSection';
 import { RecommendedSection } from '../components/RecommendedSection';
 import { SearchBar } from '../components/SearchBar';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function HomePage() {
   return (
     <div className="space-y-16">
