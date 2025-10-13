@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?         @unique
+  email         String?         @unique
+  emailVerified DateTime?
+  image         String?
+  isAdmin       Boolean         @default(false)
+  isBanned      Boolean         @default(false)
+  passwordHash  String?
+  accounts      Account[]
+  sessions      Session[]
+  library       LibraryEntry[]
+  reviews       Review[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Mix {
+  id           Int             @id @default(autoincrement())
+  number       Int             @unique
+  artist       String
+  title        String?
+  releaseDate  DateTime
+  artworkUrl   String?
+  bio          String?
+  durationSeconds Int?
+  audioPath    String?
+  externalUrl  String?
+  soundcloudUrl String?
+  mixcloudUrl   String?
+  youtubeUrl    String?
+  spotifyUrl    String?
+  heroImageUrl  String?
+  genre        String?
+  bpmLow       Int?
+  bpmHigh      Int?
+  location     String?
+  rating       Float?
+  ratingCount  Int?
+  libraryEntries LibraryEntry[]
+  recommended  RecommendedMix?
+  tracks       Track[]
+  reviews      Review[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model Track {
+  id              Int    @id @default(autoincrement())
+  mixId           Int
+  index           Int
+  timecodeSeconds Int
+  title           String
+  artist          String?
+  label           String?
+  mix             Mix    @relation(fields: [mixId], references: [id], onDelete: Cascade)
+
+  @@unique([mixId, index])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  mixId     Int
+  userId    String?  // optional legacy compatibility
+  userName  String
+  rating    Int      @default(0)
+  body      String
+  createdAt DateTime @default(now())
+  mix       Mix      @relation(fields: [mixId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model LibraryEntry {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  mixId     Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mix       Mix      @relation(fields: [mixId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, mixId])
+}
+
+model RecommendedMix {
+  id        Int  @id @default(autoincrement())
+  mixId     Int  @unique
+  mix       Mix  @relation(fields: [mixId], references: [id], onDelete: Cascade)
+  priority  Int  @default(0)
+  createdAt DateTime @default(now())
+}

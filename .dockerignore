@@ -1,0 +1,10 @@
+node_modules
+.next/cache
+.next/types
+.git
+*.log
+Dockerfile
+docker-compose.yml
+README.md
+**/.DS_Store
+tmp

@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: #0a0a0a;
+}
+
+body {
+  background: radial-gradient(circle at 30% 20%, #111 0%, #050505 70%);
+}
+
+/* Site title animated gradient (moved from layout to avoid client-only import in server component) */
+.site-title {
+  background-image: linear-gradient(90deg,#4fa3ff,#9b5cff,#ff4fa3,#ff344d,#4fa3ff);
+  background-size: 400% 400%;
+  animation: siteTitleHue 18s linear infinite;
+  position: relative;
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-title { animation: none; background-position: 50% 50%; }
+}
+@keyframes siteTitleHue {
+  0% { background-position: 0% 50%; filter: drop-shadow(0 0 4px rgba(255,90,150,0.25)); }
+  25% { background-position: 50% 50%; filter: drop-shadow(0 0 6px rgba(160,120,255,0.25)); }
+  50% { background-position: 100% 50%; filter: drop-shadow(0 0 5px rgba(255,80,90,0.25)); }
+  75% { background-position: 50% 50%; filter: drop-shadow(0 0 6px rgba(90,150,255,0.25)); }
+  100% { background-position: 0% 50%; filter: drop-shadow(0 0 4px rgba(255,90,150,0.25)); }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #111;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a3a;
+}
+
+.glass {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.gradient-text {
+  background: linear-gradient(90deg,#ff2d55,#ff6b6b);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+@keyframes fadeScale { 0% { opacity: 0; transform: scale(.92) translateY(-4px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes fadeOutScale { 0% { opacity:1; transform:scale(1) translateY(0);} 100% { opacity:0; transform:scale(.94) translateY(-4px);} }
+
