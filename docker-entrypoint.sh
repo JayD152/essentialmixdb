@@ -42,12 +42,46 @@ if echo "$DATABASE_URL" | grep -qiE 'postgres|mysql|sqlserver'; then
   fi
 else
   # SQLite: ensure client + schema exist (idempotent)
+  # Try to create directory for SQLite file if using file:/absolute/path or file:./relative/path
+  DB_URL="$DATABASE_URL"
+  case "$DB_URL" in
+    file:/*)
+      DB_PATH="${DB_URL#file:}"
+      ;;
+    file:./*)
+      DB_PATH="${DB_URL#file:./}"
+      ;;
+    file:*)
+      # fallback: strip prefix
+      DB_PATH="${DB_URL#file:}"
+      ;;
+    *)
+      DB_PATH=""
+      ;;
+  esac
+  if [ -n "$DB_PATH" ]; then
+    DB_DIR=$(dirname "$DB_PATH")
+    mkdir -p "$DB_DIR" || true
+  fi
+
   if [ -x ./node_modules/.bin/prisma ]; then
-    ./node_modules/.bin/prisma generate >/dev/null 2>&1 || true
-    ./node_modules/.bin/prisma db push --accept-data-loss --schema ./prisma/schema.prisma >/dev/null 2>&1 || true
+    echo "[entrypoint] Prisma generate (SQLite)"
+    ./node_modules/.bin/prisma generate --schema ./prisma/schema.prisma || echo "[entrypoint] prisma generate failed"
+    echo "[entrypoint] Prisma db push (SQLite)"
+    if ! ./node_modules/.bin/prisma db push --accept-data-loss --schema ./prisma/schema.prisma; then
+      echo "[entrypoint] ERROR: prisma db push failed; schema may not be applied"
+    fi
   else
-    command -v npx >/dev/null 2>&1 && npx prisma generate >/dev/null 2>&1 || true
-    command -v npx >/dev/null 2>&1 && npx prisma db push --accept-data-loss --schema ./prisma/schema.prisma >/dev/null 2>&1 || true
+    if command -v npx >/dev/null 2>&1; then
+      echo "[entrypoint] Prisma generate via npx (SQLite)"
+      npx prisma generate --schema ./prisma/schema.prisma || echo "[entrypoint] prisma generate failed (npx)"
+      echo "[entrypoint] Prisma db push via npx (SQLite)"
+      if ! npx prisma db push --accept-data-loss --schema ./prisma/schema.prisma; then
+        echo "[entrypoint] ERROR: prisma db push failed (npx); schema may not be applied"
+      fi
+    else
+      echo "[entrypoint] WARNING: prisma CLI not available; SQLite schema not ensured"
+    fi
   fi
 fi
 
