@@ -40,6 +40,19 @@ if echo "$DATABASE_URL" | grep -qiE 'postgres|mysql|sqlserver'; then
     echo "[entrypoint] migrate deploy failed; attempting prisma db push for fresh DB"
     run_prisma db push --accept-data-loss --schema "$SCHEMA_PATH" || echo "[entrypoint] prisma db push also failed"
   fi
+
+  # Optional seed on empty database
+  if [ "${SEED_ON_EMPTY:-1}" = "1" ]; then
+    echo "[entrypoint] Checking if database is empty for seeding (server DB)"
+    set +e
+    COUNT_OUT=$(node -e "try{const {PrismaClient}=require('@prisma/client');(async()=>{const p=new PrismaClient();const c=await p.mix.count();console.log(c);await p.$disconnect();process.exit(0)})()}catch(e){process.exit(2)}")
+    STATUS=$?
+    set -e
+    if [ $STATUS -eq 0 ] && [ "$COUNT_OUT" = "0" ]; then
+      echo "[entrypoint] Running seed (prisma/seed.cjs)"
+      node prisma/seed.cjs || echo "[entrypoint] Seed script failed"
+    fi
+  fi
 else
   # SQLite: ensure client + schema exist (idempotent)
   # Try to create directory for SQLite file if using file:/absolute/path or file:./relative/path
@@ -81,6 +94,19 @@ else
       fi
     else
       echo "[entrypoint] WARNING: prisma CLI not available; SQLite schema not ensured"
+    fi
+  fi
+
+  # Optional seed on empty database (SQLite)
+  if [ "${SEED_ON_EMPTY:-1}" = "1" ]; then
+    echo "[entrypoint] Checking if database is empty for seeding (SQLite)"
+    set +e
+    COUNT_OUT=$(node -e "try{const {PrismaClient}=require('@prisma/client');(async()=>{const p=new PrismaClient();const c=await p.mix.count();console.log(c);await p.$disconnect();process.exit(0)})()}catch(e){process.exit(2)}")
+    STATUS=$?
+    set -e
+    if [ $STATUS -eq 0 ] && [ "$COUNT_OUT" = "0" ]; then
+      echo "[entrypoint] Running seed (prisma/seed.cjs)"
+      node prisma/seed.cjs || echo "[entrypoint] Seed script failed"
     fi
   fi
 fi
