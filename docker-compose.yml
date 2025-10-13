@@ -9,8 +9,7 @@ services:
       NEXTAUTH_SECRET: "changeme-dev-secret" # replace in prod
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/essentialmixdb?schema=public"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
   db:
     image: postgres:16-alpine
     environment:
@@ -19,10 +18,5 @@ services:
       POSTGRES_DB: essentialmixdb
     volumes:
       - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
 volumes:
   pgdata: {}
