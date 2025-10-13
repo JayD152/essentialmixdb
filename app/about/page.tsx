@@ -27,7 +27,7 @@ export default async function AboutPage() {
 				<h1 className="text-3xl font-semibold tracking-tight">About</h1>
 				<p className="text-neutral-300 leading-relaxed">
 					Essential Mix DB is a lovingly crafted, independent archive & personal library interface for BBC Radio 1&apos;s
-					long–running Essential Mix series. The goal: make every mix instantly explorable — searchable by artist, era,
+					long-running Essential Mix series. The goal: make every mix instantly explorable — searchable by artist, era,
 					mood, and more — while letting you curate a personal collection of favorites.
 				</p>
 				<p className="text-neutral-400 text-sm">
