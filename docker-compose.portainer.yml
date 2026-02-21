@@ -11,6 +11,10 @@ services:
       NEXTAUTH_URL: "https://your-domain.example"
       NEXTAUTH_SECRET: "replace-with-strong-secret"
       DATABASE_URL: "postgresql://essentialmix:replace-db-password@db:5432/essentialmixdb"
+      SUPER_ADMIN_BOOTSTRAP: "1"
+      SUPER_ADMIN_USERNAME: "essentialmixadmin"
+      SUPER_ADMIN_PASSWORD: "replace-with-strong-admin-password"
+      SUPER_ADMIN_RESET_PASSWORD_ON_BOOT: "0"
     depends_on:
       db:
         condition: service_healthy

@@ -1,11 +1,50 @@
 import { getSequelize, initModels, Mix as MixModel, Track as TrackModel, Review as ReviewModel, User as UserModel, LibraryEntry as LibraryEntryModel, RecommendedMix as RecommendedMixModel, Account as AccountModel, Session as SessionModel, VerificationToken as VerificationTokenModel } from './sequelize';
 import { Op, Transaction } from 'sequelize';
+import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 
 // Lazy initialize to avoid running during Next build's analysis.
 // Important: model classes are module-scoped and can be recreated during HMR,
 // so model init must run per-module-load, while sync can remain global.
-const globalDb = globalThis as unknown as { __dbSynced?: boolean };
+const globalDb = globalThis as unknown as { __dbSynced?: boolean; __superAdminBootstrapped?: boolean };
 let localModelsInitialized = false;
+
+async function ensureSuperAdminBootstrap() {
+	if (globalDb.__superAdminBootstrapped) return;
+	const bootstrapEnabled = (process.env.SUPER_ADMIN_BOOTSTRAP ?? '1') === '1';
+	const username = (process.env.SUPER_ADMIN_USERNAME || 'essentialmixadmin').trim();
+	const password = (process.env.SUPER_ADMIN_PASSWORD || '').trim();
+	const resetPasswordOnBoot = (process.env.SUPER_ADMIN_RESET_PASSWORD_ON_BOOT ?? '0') === '1';
+
+	if (!bootstrapEnabled || !username || !password) {
+		globalDb.__superAdminBootstrapped = true;
+		return;
+	}
+
+	const existing = await UserModel.findOne({ where: { name: username } });
+	const passwordHash = await bcrypt.hash(password, 10);
+
+	if (!existing) {
+		await UserModel.create({
+			id: randomUUID(),
+			name: username,
+			passwordHash,
+			isAdmin: true,
+			isBanned: false
+		});
+	} else {
+		const updates: any = {};
+		if (!existing.get('isAdmin')) updates.isAdmin = true;
+		if (existing.get('isBanned')) updates.isBanned = false;
+		if (resetPasswordOnBoot) updates.passwordHash = passwordHash;
+		if (Object.keys(updates).length) {
+			await existing.update(updates);
+		}
+	}
+
+	globalDb.__superAdminBootstrapped = true;
+}
+
 async function ensureInit() {
 	if (!localModelsInitialized) {
 		initModels();
@@ -28,6 +67,7 @@ async function ensureInit() {
 		if (lastError) throw lastError;
 		globalDb.__dbSynced = true;
 	}
+	await ensureSuperAdminBootstrap();
 }
 
 function toSequelizeWhere(where: any) {
