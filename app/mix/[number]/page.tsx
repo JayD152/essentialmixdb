@@ -10,6 +10,7 @@ interface Props { params: { number: string } }
 
 export default async function MixDetailPage({ params }: Props) {
   const num = parseInt(params.number, 10);
+  if (!Number.isFinite(num) || num <= 0) return notFound();
   const mix = await prisma.mix.findFirst({
     where: { number: num },
     include: {

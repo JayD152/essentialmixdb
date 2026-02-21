@@ -16,12 +16,13 @@ export default async function LibraryPage() {
     );
   }
   const entries = await prisma.libraryEntry.findMany({ where: { userId: session.user.id }, include: { mix: true }, orderBy: { createdAt: 'desc' } });
+  const safeEntries = entries.filter((e: any) => e?.mix && Number.isFinite(Number(e.mix.number)));
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Your Library</h1>
-      {entries.length === 0 && <p className="text-neutral-500 text-sm">No mixes saved yet.</p>}
+      {safeEntries.length === 0 && <p className="text-neutral-500 text-sm">No mixes saved yet.</p>}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {entries.map(e => <MixCard key={e.id} mix={e.mix} />)}
+        {safeEntries.map(e => <MixCard key={e.id} mix={e.mix} />)}
       </div>
     </div>
   );

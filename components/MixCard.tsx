@@ -15,6 +15,9 @@ function gradientFallback(mix: any) {
 }
 
 export function MixCard({ mix, showLibraryButton = true, compact = false }: Props) {
+  if (!mix || !Number.isFinite(Number(mix.number)) || !mix.releaseDate || !mix.artist) {
+    return null;
+  }
   const year = new Date(mix.releaseDate).getFullYear();
   const bg = gradientFallback(mix);
   return (
