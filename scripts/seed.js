@@ -3,7 +3,19 @@ const { subDays } = require('date-fns');
 const { Sequelize, DataTypes } = require('sequelize');
 
 async function main() {
-  const sequelize = new Sequelize({ dialect: 'sqlite', storage: process.env.DATABASE_URL?.startsWith('file:') ? process.env.DATABASE_URL.slice(5) : (process.env.SQLITE_PATH || './prisma/dev.db'), logging: false });
+  const databaseUrl = process.env.DATABASE_URL || '';
+  const isPostgres = databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://');
+  const sequelize = isPostgres
+    ? new Sequelize(databaseUrl, {
+        dialect: 'postgres',
+        logging: false,
+        pool: { max: 10, min: 0, idle: 10000, acquire: 30000 }
+      })
+    : new Sequelize({
+        dialect: 'sqlite',
+        storage: databaseUrl.startsWith('file:') ? databaseUrl.slice(5) : (process.env.SQLITE_PATH || './prisma/dev.db'),
+        logging: false
+      });
   const Mix = sequelize.define('Mix', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     number: { type: DataTypes.INTEGER, unique: true, allowNull: false },
