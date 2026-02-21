@@ -145,6 +145,24 @@ function buildInclude(includeArg: any, where: any) {
 	if (includeArg?.mix) {
 		inc.push({ model: MixModel });
 	}
+	if (includeArg?.tracks) {
+		const trackCfg = includeArg.tracks === true ? {} : includeArg.tracks;
+		const trackInclude: any = { model: TrackModel, required: false };
+		const trackOrder = toSequelizeOrder(trackCfg?.orderBy);
+		if (trackOrder) trackInclude.order = trackOrder;
+		if (trackCfg?.take !== undefined) trackInclude.limit = trackCfg.take;
+		if (trackCfg?.where) trackInclude.where = toSequelizeWhere(trackCfg.where);
+		inc.push(trackInclude);
+	}
+	if (includeArg?.reviews) {
+		const reviewCfg = includeArg.reviews === true ? {} : includeArg.reviews;
+		const reviewInclude: any = { model: ReviewModel, required: false };
+		const reviewOrder = toSequelizeOrder(reviewCfg?.orderBy);
+		if (reviewOrder) reviewInclude.order = reviewOrder;
+		if (reviewCfg?.take !== undefined) reviewInclude.limit = reviewCfg.take;
+		if (reviewCfg?.where) reviewInclude.where = toSequelizeWhere(reviewCfg.where);
+		inc.push(reviewInclude);
+	}
 	return inc.length ? inc : undefined;
 }
 

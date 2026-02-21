@@ -19,6 +19,8 @@ export default async function MixDetailPage({ params }: Props) {
     }
   }) as any;
   if (!mix) return notFound();
+  mix.tracks = Array.isArray(mix.tracks) ? mix.tracks : [];
+  mix.reviews = Array.isArray(mix.reviews) ? mix.reviews : [];
 
   // Fetch related (same genre) and "you might like" (recommended) mixes
   const [related, youMightLikeRaw] = await Promise.all([
