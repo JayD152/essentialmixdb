@@ -3,6 +3,11 @@ import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 
+export const SUPER_ADMIN_USERNAME = (process.env.SUPER_ADMIN_USERNAME || 'essentialmixadmin').trim().toLowerCase();
+export function isSuperAdminName(name?: string | null) {
+  return (name || '').trim().toLowerCase() === SUPER_ADMIN_USERNAME;
+}
+
 declare module 'next-auth' {
   interface Session extends DefaultSession {
     user: { id: string; name?: string | null; isAdmin?: boolean; isBanned?: boolean } & DefaultSession['user'];
@@ -25,15 +30,26 @@ export const authOptions: NextAuthOptions = {
         const password = credentials?.password || '';
         const mode = credentials?.mode || 'login';
         if (!username || password.length < 4) return null;
-  const existing = await prisma.user.findFirst({ where: { name: username } }) as any;
+        const existing = await prisma.user.findFirst({ where: { name: username } }) as any;
         if (mode === 'register') {
           if (existing) return null; // username taken
           const hash = await bcrypt.hash(password, 10);
-          const user = await (prisma as any).user.create({ data: { name: username, passwordHash: hash } });
+          const user = await (prisma as any).user.create({
+            data: {
+              name: username,
+              passwordHash: hash,
+              isAdmin: isSuperAdminName(username)
+            }
+          });
           return user;
         } else {
           if (!existing) return null;
-            // banned check
+          // Ensure reserved super-admin account always has admin rights.
+          if (isSuperAdminName(existing?.name) && !existing?.isAdmin) {
+            await prisma.user.update({ where: { id: existing.id }, data: { isAdmin: true } }).catch(() => {});
+            existing.isAdmin = true;
+          }
+          // banned check
           if (existing?.isBanned) return null;
           if (!existing?.passwordHash) return null;
           const ok = await bcrypt.compare(password, existing.passwordHash);
@@ -50,14 +66,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         (token as any).uid = (user as any).id;
-        (token as any).adm = (user as any).isAdmin ?? false;
+        (token as any).adm = ((user as any).isAdmin ?? false) || isSuperAdminName((user as any).name);
       } else if (token && (token as any).uid) {
         // refresh admin + ban flag every hour (simple heuristic)
         const last = (token as any).rfh || 0;
         if (Date.now() - last > 1000 * 60 * 60) {
           const u = await prisma.user.findUnique({ where: { id: (token as any).uid } }) as any;
           if (u) {
-            (token as any).adm = u.isAdmin;
+            (token as any).adm = !!u.isAdmin || isSuperAdminName(u.name);
             (token as any).ban = u.isBanned;
           }
           (token as any).rfh = Date.now();
