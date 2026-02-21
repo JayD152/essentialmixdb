@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  app:
+    image: ghcr.io/jayd152/essentialmixdb:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: "production"
+      NEXTAUTH_URL: "https://your-domain.example"
+      NEXTAUTH_SECRET: "replace-with-strong-secret"
+      DATABASE_URL: "postgresql://essentialmix:replace-db-password@db:5432/essentialmixdb"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "essentialmix"
+      POSTGRES_PASSWORD: "replace-db-password"
+      POSTGRES_DB: "essentialmixdb"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U essentialmix -d essentialmixdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata: {}

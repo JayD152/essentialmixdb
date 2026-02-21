@@ -1,6 +1,8 @@
 import { prisma } from '../../lib/prisma';
 import Link from 'next/link';
 
+
+
 export const metadata = {
 	title: 'About • Essential Mix DB'
 };
@@ -68,7 +70,7 @@ export default async function AboutPage() {
 				<ul className="list-disc pl-5 text-neutral-300 text-sm space-y-1">
 					<li>Next.js 14 App Router (hybrid Server & Client Components)</li>
 					<li>TypeScript + Tailwind CSS for rapid, consistent UI styling</li>
-					<li>Prisma ORM (SQLite dev – ready for Postgres / PlanetScale in production)</li>
+					<li>Sequelize ORM (SQLite dev)</li>
 					<li>NextAuth for authentication & session handling</li>
 					<li>Custom animations (hearts, heartbreak, gradient title) for a bit of delight</li>
 				</ul>

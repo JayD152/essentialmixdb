@@ -1,7 +1,11 @@
-const { PrismaClient } = require('@prisma/client');
+// Diagnostic: list mix numbers and track counts using the local prisma shim (Sequelize-backed)
+const path = require('path');
+
 (async () => {
-  const prisma = new PrismaClient();
-  const mixes = await prisma.mix.findMany({ include: { _count: { select: { tracks: true } } }, orderBy: { number: 'asc' } });
-  console.table(mixes.map(m => ({ number: m.number, tracks: m._count.tracks })));
-  await prisma.$disconnect();
+  try { require('ts-node/register'); } catch {}
+  const { prisma } = require(path.resolve(__dirname, '..', 'lib', 'prisma.ts'));
+  const mixes = await prisma.mix.findMany({ orderBy: { number: 'asc' } });
+  const tracks = await prisma.track.findMany({});
+  const counts = tracks.reduce((acc, t) => { acc[t.mixId] = (acc[t.mixId] || 0) + 1; return acc; }, {});
+  console.table(mixes.map(m => ({ number: m.number, tracks: counts[m.id] || 0 })));
 })();

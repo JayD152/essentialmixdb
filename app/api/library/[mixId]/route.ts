@@ -6,6 +6,6 @@ export async function DELETE(_req: Request, { params }: { params: { mixId: strin
   const session = await getServerSession(authOptions);
   if (!session) return new Response('Unauthorized', { status: 401 });
   const mixId = parseInt(params.mixId, 10);
-  await prisma.libraryEntry.delete({ where: { userId_mixId: { userId: session.user.id, mixId } } }).catch(() => {});
+  await prisma.libraryEntry.delete({ where: { userId: session.user.id, mixId } as any }).catch(() => {});
   return new Response('OK');
 }

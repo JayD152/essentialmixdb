@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (!session) return new Response('Unauthorized', { status: 401 });
   const { mixId } = await req.json();
   const entry = await prisma.libraryEntry.upsert({
-    where: { userId_mixId: { userId: session.user.id, mixId } },
+    where: { userId: session.user.id, mixId } as any,
     update: {},
     create: { userId: session.user.id, mixId }
   });

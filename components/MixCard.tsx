@@ -1,15 +1,14 @@
 import Link from 'next/link';
-import { Mix } from '@prisma/client';
 import { LibraryButton } from './LibraryButton';
 import clsx from 'clsx';
 
 interface Props {
-  mix: Mix & { recommended?: boolean };
+  mix: any & { recommended?: boolean };
   showLibraryButton?: boolean;
   compact?: boolean;
 }
 
-function gradientFallback(mix: Mix) {
+function gradientFallback(mix: any) {
   const hue = (mix.number * 37) % 360;
   const hue2 = (hue + 30) % 360;
   return `linear-gradient(140deg,hsl(${hue} 18% 24%),hsl(${hue2} 22% 18%))`;

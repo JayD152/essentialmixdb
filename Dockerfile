@@ -1,6 +1,5 @@
-## Multi-stage production build for Essential Mix DB (Next.js 14 + Prisma)
-## Default uses SQLite file inside container (not ideal for horizontal scaling).
-## For production at scale, switch DATABASE_URL to a managed Postgres instance.
+## Multi-stage production build for Essential Mix DB (Next.js 14 + Sequelize)
+## Supports SQLite (file:...) and Postgres (postgres://...)
 
 ARG NODE_VERSION=20.11.1
 FROM node:${NODE_VERSION}-alpine AS deps
@@ -14,8 +13,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Generate Prisma client (binary targets match build platform) and build Next.js
-RUN npx prisma generate
 RUN npm run build
 
 FROM node:${NODE_VERSION}-alpine AS runner
@@ -27,17 +24,9 @@ ENV NODE_ENV=production \
 # Copy only the standalone production output and minimal assets
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-#COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
-# Include Prisma CLI from builder so migrations can run in runtime container
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3000
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

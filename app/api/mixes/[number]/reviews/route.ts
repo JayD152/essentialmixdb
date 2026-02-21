@@ -26,7 +26,7 @@ export async function POST(req: Request, { params }: { params: { number: string 
     if (!mix) return NextResponse.json({ error: 'Mix not found' }, { status: 404 });
 
   // Optional: one review per user per mix (if needed). For now allow multiples unless we add userId column to Review.
-  const review = await (prisma as any).review.create({ data: { mixId: mix.id, userName, rating: intRating, body: text, userId: dbUser?.id } });
+  const review = await prisma.review.create({ data: { mixId: mix.id, userName, rating: intRating, body: text, userId: dbUser?.id } } as any);
 
     // Recompute aggregate rating
     const stats = await prisma.review.aggregate({ where: { mixId: mix.id }, _avg: { rating: true }, _count: { rating: true } });
