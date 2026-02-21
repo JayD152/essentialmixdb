@@ -3,6 +3,9 @@ import { Sequelize, DataTypes, Model, Op } from 'sequelize';
 // in bundled environments (e.g., Next.js server runtime)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const sqlite3 = require('sqlite3');
+// Ensure pg module is explicitly provided for Postgres in bundled runtimes
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const pg = require('pg');
 
 // Resolve SQLite storage path from env DATABASE_URL (e.g., file:./prisma/dev.db) or fallback
 function resolveSqlitePath() {
@@ -26,6 +29,7 @@ export function getSequelize(): Sequelize {
       _sequelize = new Sequelize(url, {
         dialect: 'postgres',
         logging: false,
+        dialectModule: pg,
         pool: {
           max: 10,
           min: 0,
